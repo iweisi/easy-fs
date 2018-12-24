@@ -2,6 +2,12 @@ html, body {
     background: #EEEEEE;
 }
 
+@media screen and (min-width: 1200px) {
+    .layui-container {
+        width: 1145px;
+    }
+}
+
 a {
     cursor: pointer;
 }
@@ -27,13 +33,18 @@ a {
 .header {
     background-color: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05);
-    height: 60px;
-    line-height: 60px;
+    height: 50px;
+    line-height: 50px;
 }
 
 .header .layui-nav {
     background: transparent;
     padding: 0;
+}
+
+.header .layui-nav .layui-nav-item {
+    height: 50px;
+    line-height: 50px;
 }
 
 .header a {
