@@ -9,57 +9,283 @@
     <link rel="icon" href="assets/images/favicon.ico"/>
     <link rel="stylesheet" href="assets/libs/layui/css/layui.css">
     <link rel="stylesheet" href="assets/common.css">
+    <style>
+        .file-list {
+            margin-top: 15px;
+        }
+
+        .file-list-item {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 15px;
+            width: 90px;
+            text-align: center;
+            vertical-align: top;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .file-list-item:hover {
+            color: #1E9FFF;
+        }
+
+        .file-list-item .file-list-img {
+            width: 90px;
+            height: 90px;
+        }
+
+        .file-list-item .file-list-img img {
+            width: 56px;
+            height: 56px;
+            margin-top: 17px;
+        }
+
+        .file-list-item .file-list-img.media img {
+            width: 90px;
+            height: 90px;
+            margin-top: 0;
+        }
+
+        .file-list-item .file-list-name {
+            word-wrap: break-word;
+            text-align: center;
+            line-height: normal;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 
-<body class="layui-layout-body">
-<div class="layui-layout layui-layout-admin">
-    <div class="layui-header">
-        <div class="layui-logo">文件服务器</div>
-        <ul class="layui-nav layui-layout-left">
-            <li class="layui-nav-item" lay-unselect>
-                <a href="https://easyweb.vip" target="_blank" id="ag">
-                    <i class="layui-icon layui-icon-website"></i>
-                </a>
-            </li>
-        </ul>
+<body>
+<div class="header">
+    <div class="layui-container">
+        <div class="layui-logo">
+            <img src="assets/images/logo.png"/>
+            <cite> EasyFS文件服务器</cite>
+        </div>
         <ul class="layui-nav layui-layout-right">
             <li class="layui-nav-item" lay-unselect>
-                <a id="btnUP"><img src="assets/images/head.png" class="layui-nav-img"><span id="uName">用户名</span></a>
+                <a><i class="layui-icon">&#xe66c;</i> 欢迎使用！</a>
             </li>
         </ul>
     </div>
+</div>
 
-    <div class="layui-side">
-        <div class="layui-side-scroll">
-            <ul class="layui-nav layui-nav-tree" style="margin-top: 10px;">
-                <li class="layui-nav-item layui-nav-itemed">
-                    <a><i class="layui-icon layui-icon-set"></i>&emsp;系统管理</a>
-                    <dl class="layui-nav-child">
-                        <dd class="layui-this"><a lay-href="pages/client.html">客户端管理</a></dd>
-                        <dd><a lay-href="pages/user.html">用户管理</a></dd>
-                        <dd><a lay-href="pages/role.html">角色管理</a></dd>
-                        <dd><a lay-href="pages/authorities.html">权限管理</a></dd>
-                    </dl>
-                </li>
-                <li class="layui-nav-item">
-                    <a><i class="layui-icon layui-icon-console"></i>&emsp;系统监控</a>
-                    <dl class="layui-nav-child">
-                        <dd><a lay-href="/druid">Druid监控</a></dd>
-                    </dl>
-                </li>
-                <li class="layui-nav-item">
-                    <a><i class="layui-icon layui-icon-list"></i>&emsp;接口文档</a>
-                    <dl class="layui-nav-child">
-                        <dd><a lay-href="">token接口</a></dd>
-                        <dd><a lay-href="/swagger-ui.html">其他接口</a></dd>
-                    </dl>
-                </li>
-            </ul>
+<div class="layui-container" style="padding-top: 15px;">
+    <div class="layui-card">
+        <div class="layui-card-header">当前位置：/</div>
+        <div class="layui-card-body">
+            <div>
+                <button id="btnBack" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe65c;</i>返回上级
+                </button>
+                <button id="btnRefresh" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe669;</i>刷新
+                </button>
+                <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn"><i class="layui-icon">&#xe681;</i>上传文件
+                </button>
+            </div>
+
+            <div class="file-list">
+                <div class="file-list-item">
+                    <div class="file-list-img">
+                        <img src="http://www.2000k.top/v/ico/w.png"/>
+                    </div>
+                    <div class="file-list-name">其他</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+                <div class="file-list-item">
+                    <div class="file-list-img media">
+                        <img src="http://www.2000k.top/v/img/201810262138223769.jpg"/>
+                    </div>
+                    <div class="file-list-name">201810262134559591.jpg</div>
+                </div>
+            </div>
+
         </div>
-    </div>
-
-    <div class="layui-body">
-        <iframe name="body" class="admin-iframe" src="pages/client.html" frameborder="0"></iframe>
     </div>
 </div>
 

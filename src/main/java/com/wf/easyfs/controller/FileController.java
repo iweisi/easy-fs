@@ -22,8 +22,6 @@ import java.util.UUID;
 public class FileController {
     @Value("${fs.dir}")
     private String fileDir;
-    @Value("${fs.useDB}")
-    private Boolean useDB;
     @Value("${fs.uuidName}")
     private Boolean uuidName;
 

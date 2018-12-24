@@ -3,6 +3,7 @@ package com.wf.easyfs.controller;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -12,8 +13,6 @@ import java.util.Map;
 public class ViewController {
     @Value("${fs.dir}")
     private String fileDir;
-    @Value("${fs.useDB}")
-    private Boolean useDB;
 
     @RequestMapping({"/", "/index"})
     public String index() {
@@ -25,7 +24,12 @@ public class ViewController {
      */
     @ResponseBody
     @RequestMapping("/list")
-    public Map list() {
+    public Map list(String dir) {
+        if (dir == null) {
+            dir = "";
+        }
+        File file = new File(File.listRoots()[0], fileDir + "/" + dir);
+        File[] listFiles = file.listFiles();
         return null;
     }
 }
