@@ -1,6 +1,8 @@
 package com.wf.easyfs.controller;
 
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,27 +12,42 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by wangfan on 2018-12-24 下午 4:10.
  */
-@RequestMapping("/file")
+@Controller
 public class FileController {
     @Value("${fs.dir}")
     private String fileDir;
     @Value("${fs.uuidName}")
     private Boolean uuidName;
+    @Value("${fs.useSm}")
+    private Boolean useSm;
+    @Value("${fs.useNginx}")
+    private Boolean useNginx;
+    @Value("${fs.nginxUrl}")
+    private String nginxUrl;
+
+    // 首页
+    @RequestMapping({"/", "/index"})
+    public String index() {
+        return "index.html";
+    }
 
     /**
      * 上传文件
      */
     @ResponseBody
-    @PostMapping("/upload")
+    @PostMapping("/file/upload")
     public Map upload(@RequestParam MultipartFile file) {
+        if (fileDir == null) {
+            fileDir = "/";
+        }
+        if (!fileDir.endsWith("/")) {
+            fileDir += "/";
+        }
         // 文件原始名称
         String originalFileName = file.getOriginalFilename();
         String suffix = originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
@@ -56,7 +73,17 @@ public class FileController {
                 outFile.getParentFile().mkdirs();
             }
             file.transferTo(outFile);
-            return getRS(0, "上传成功", path);
+            Map rs = getRS(0, "上传成功", path);
+            //生成缩略图
+            if (useSm != null && useSm) {
+                File smImg = new File(File.listRoots()[0], fileDir + "sm/" + path);
+                if (!smImg.getParentFile().exists()) {
+                    smImg.getParentFile().mkdirs();
+                }
+                Thumbnails.of(outFile).scale(1f).outputQuality(0.25f).toFile(smImg);
+                rs.put("smUrl", "sm/" + path);
+            }
+            return rs;
         } catch (Exception e) {
             e.printStackTrace();
             return getRS(500, e.getMessage());
@@ -64,12 +91,37 @@ public class FileController {
     }
 
     /**
-     * 查看文件
+     * 查看原文件
      */
-    @GetMapping("/{file:.+}")
-    public void file(@PathVariable("file") String filename, HttpServletResponse response) {
+    @GetMapping("/file/{y}/{m}/{d}/{file:.+}")
+    public void file(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+        if (fileDir == null) {
+            fileDir = "/";
+        }
+        if (!fileDir.endsWith("/")) {
+            fileDir += "/";
+        }
+        outputFile(fileDir + y + "/" + m + "/" + d + "/" + filename, response);
+    }
+
+    /**
+     * 查看缩略图
+     */
+    @GetMapping("/file/sm/{y}/{m}/{d}/{file:.+}")
+    public void fileSm(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+        if (fileDir == null) {
+            fileDir = "/";
+        }
+        if (!fileDir.endsWith("/")) {
+            fileDir += "/";
+        }
+        outputFile(fileDir + "sm/" + y + "/" + m + "/" + d + "/" + filename, response);
+    }
+
+    // 输出文件流
+    private void outputFile(String file, HttpServletResponse response) {
         // 判断文件是否存在
-        File inFile = new File(File.listRoots()[0], fileDir + filename);
+        File inFile = new File(File.listRoots()[0], file);
         if (!inFile.exists()) {
             PrintWriter writer = null;
             try {
@@ -83,7 +135,7 @@ public class FileController {
             return;
         }
         // 获取文件类型
-        Path path = Paths.get(filename);
+        Path path = Paths.get(inFile.getName());
         String contentType = null;
         try {
             contentType = Files.probeContentType(path);
@@ -94,7 +146,7 @@ public class FileController {
             response.setContentType(contentType);
         } else {
             response.setContentType("application/force-download");
-            response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
+            response.setHeader("Content-Disposition", "attachment;fileName=" + inFile.getName());
         }
         // 输出文件流
         OutputStream os = null;
@@ -121,11 +173,137 @@ public class FileController {
         }
     }
 
+    /**
+     * 获取全部文件
+     */
+    @ResponseBody
+    @RequestMapping("/api/list")
+    public Map list(String dir) {
+        String serverUrl;
+        if (useNginx) {
+            if (nginxUrl == null) {
+                nginxUrl = "/";
+            }
+            if (!nginxUrl.endsWith("/")) {
+                nginxUrl += "/";
+            }
+            serverUrl = nginxUrl;
+        } else {
+            serverUrl = "file/";
+        }
+        if (fileDir == null) {
+            fileDir = "/";
+        }
+        if (!fileDir.endsWith("/")) {
+            fileDir += "/";
+        }
+        Map<String, Object> rs = new HashMap<>();
+        if (dir == null || "/".equals(dir)) {
+            dir = "";
+        } else if (dir.startsWith("/")) {
+            dir = dir.substring(1);
+        }
+        File file = new File(File.listRoots()[0], fileDir + dir);
+        File[] listFiles = file.listFiles();
+        List<Map> dataList = new ArrayList<>();
+        if (listFiles != null) {
+            for (File f : listFiles) {
+                if ("sm".equals(f.getName())) {
+                    continue;
+                }
+                Map<String, Object> m = new HashMap<>();
+                m.put("name", f.getName());  // 文件名称
+                m.put("updateTime", f.lastModified());  // 修改时间
+                m.put("isDir", f.isDirectory());  // 是否是目录
+                if (f.isDirectory()) {
+                    m.put("type", "dir");  // 文件类型
+                } else {
+                    String type;
+                    m.put("url", serverUrl + (dir.isEmpty() ? dir : (dir + "/")) + f.getName());  // 文件地址
+                    // 获取文件类型
+                    Path path = Paths.get(f.getName());
+                    String contentType = null;
+                    String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1);
+                    try {
+                        contentType = Files.probeContentType(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if ("ppt".equalsIgnoreCase(suffix) || "pptx".equalsIgnoreCase(suffix)) {
+                        type = "ppt";
+                    } else if ("doc".equalsIgnoreCase(suffix) || "docx".equalsIgnoreCase(suffix)) {
+                        type = "doc";
+                    } else if ("xls".equalsIgnoreCase(suffix) || "xlsx".equalsIgnoreCase(suffix)) {
+                        type = "xls";
+                    } else if ("pdf".equalsIgnoreCase(suffix)) {
+                        type = "pdf";
+                    } else if ("html".equalsIgnoreCase(suffix) || "htm".equalsIgnoreCase(suffix)) {
+                        type = "htm";
+                    } else if ("txt".equalsIgnoreCase(suffix)) {
+                        type = "txt";
+                    } else if ("swf".equalsIgnoreCase(suffix)) {
+                        type = "flash";
+                    } else if ("zip".equalsIgnoreCase(suffix) || "rar".equalsIgnoreCase(suffix) || "7z".equalsIgnoreCase(suffix)) {
+                        type = "zip";
+                    } else if ("zip".equalsIgnoreCase(suffix) || "rar".equalsIgnoreCase(suffix) || "7z".equalsIgnoreCase(suffix)) {
+                        type = "zip";
+                    } else if (contentType != null && contentType.startsWith("audio/")) {
+                        type = "mp3";
+                    } else if (contentType != null && contentType.startsWith("video/")) {
+                        type = "mp4";
+                    } else if (contentType != null && contentType.startsWith("image/")) {
+                        m.put("hasSm", true);  // 是否有缩略图
+                        if (useSm != null && useSm) {
+                            m.put("smUrl", serverUrl + "sm/" + (dir.isEmpty() ? dir : (dir + "/")) + f.getName());  // 缩略图地址
+                        } else {
+                            m.put("smUrl", m.get("url"));
+                        }
+                        type = "file";
+                    } else {
+                        type = "file";
+                    }
+                    m.put("type", type);
+
+                }
+                dataList.add(m);
+            }
+        }
+        rs.put("code", 200);
+        rs.put("msg", "查询成功");
+        rs.put("data", dataList);
+        return rs;
+    }
+
+    /**
+     * 删除
+     */
+    @ResponseBody
+    @RequestMapping("/api/del")
+    public Map del(String file) {
+        if (fileDir == null) {
+            fileDir = "/";
+        }
+        if (!fileDir.endsWith("/")) {
+            fileDir += "/";
+        }
+        if (file != null && !file.isEmpty()) {
+            File f = new File(File.listRoots()[0], fileDir + file);
+            if (f.delete()) {
+                File smF = new File(File.listRoots()[0], fileDir + "sm/" + file);
+                smF.delete();
+                return getRS(200, "删除成功");
+            }
+        }
+        return getRS(500, "删除失败");
+    }
+
+    // 获取当前日期
     private String getDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd/");
         return sdf.format(new Date());
     }
 
+    // 封装返回结果
     private Map getRS(int code, String msg, String url) {
         Map<String, Object> map = new HashMap<>();
         map.put("code", code);
@@ -140,6 +318,7 @@ public class FileController {
         return map;
     }
 
+    // 封装返回结果
     private Map getRS(int code, String msg) {
         return getRS(code, msg, null);
     }

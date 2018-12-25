@@ -9,43 +9,41 @@
     <link rel="icon" href="assets/images/favicon.ico"/>
     <link rel="stylesheet" href="assets/layui/css/layui.css">
     <link rel="stylesheet" href="assets/common.css">
+    <style>
+        html, body {
+            background: white;
+        }
+
+        .btnDiv {
+            text-align: right;
+        }
+
+        @media screen and (max-width: 420px) {
+            .btnDiv {
+                padding-top: 30px;
+                text-align: left;
+            }
+        }
+    </style>
 </head>
 
 <body>
-<div class="header">
-    <div class="layui-container">
-        <div class="layui-logo">
-            <img src="assets/images/logo.png"/>
-            <cite class="layui-hide-xs">&nbsp;&nbsp;EasyFS文件服务器</cite>
-        </div>
-        <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide-xs" lay-unselect>
-                <a><i class="layui-icon">&#xe66c;</i> 欢迎使用！</a>
-            </li>
-        </ul>
+
+<div style="padding: 15px;">
+    <div style="position: absolute;left: 15px;">当前位置：<span id="tvFP">/</span></div>
+    <div class="btnDiv">
+        <button id="btnBack" class="layui-btn layui-btn-sm layui-btn-primary icon-btn">
+            <i class="layui-icon">&#xe65c;</i>上级
+        </button>
+        <button id="btnRefresh" class="layui-btn layui-btn-sm layui-btn-primary icon-btn">
+            <i class="layui-icon">&#xe669;</i>刷新
+        </button>
+        <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn">
+            <i class="layui-icon">&#xe681;</i>上传
+        </button>
     </div>
-</div>
 
-<div class="layui-container" style="padding-top: 15px;">
-    <div class="layui-card">
-        <div class="layui-card-header">当前位置：<span id="tvFP">/</span></div>
-        <div class="layui-card-body">
-            <div>
-                <button id="btnBack" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe65c;</i>返回上级
-                </button>
-                <button id="btnRefresh" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe669;</i>刷新
-                </button>
-                <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn"><i class="layui-icon">&#xe681;</i>上传文件
-                </button>
-                <button id="btnDilaog" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"
-                        style="margin-left: 10px;"><i class="layui-icon">&#xe634;</i>弹窗模式
-                </button>
-            </div>
-
-            <div class="file-list">
-            </div>
-
-        </div>
+    <div class="file-list">
     </div>
 </div>
 
@@ -54,12 +52,7 @@
     <div class="dropdown-anchor"></div>
     <ul>
         <li><a id="open"><i class="layui-icon layui-icon-file"></i>&emsp;查看&emsp;</a></li>
-        <li><a id="copy"><i class="layui-icon layui-icon-release"></i>&emsp;复制&emsp;</a></li>
-        <li>
-            <a id="del" style="color: red !important;">
-                <i class="layui-icon layui-icon-delete" style="font-size: 19px;"></i>&nbsp;&nbsp;&nbsp;删除&emsp;
-            </a>
-        </li>
+        <li><a id="sel"><i class="layui-icon layui-icon-release"></i>&emsp;选择&emsp;</a></li>
     </ul>
 </div>
 
@@ -80,7 +73,6 @@
 </script>
 
 <script type="text/javascript" src="assets/layui/layui.js"></script>
-<script type="text/javascript" src="assets/clipboard.min.js"></script>
 <script>
     layui.use(['jquery', 'layer', 'element', 'upload', 'laytpl'], function () {
         var $ = layui.jquery;
@@ -190,50 +182,12 @@
         $('#open').click(function () {
             window.open(mUrl);
         });
-        // 删除
-        $('#del').click(function () {
-            layer.confirm('确定要删除此文件吗？', function () {
-                layer.load(2);
-                $.get('api/del', {
-                    file: mUrl
-                }, function (res) {
-                    layer.closeAll('loading');
-                    if (res.code == 200) {
-                        layer.msg(res.msg, {icon: 1});
-                        renderList();
-                    } else {
-                        layer.msg(res.msg, {icon: 2});
-                    }
-                });
-            });
-        });
-        // 复制
-        var clipboard = new ClipboardJS('#copy');
-        clipboard.on('success', function (e) {
-            e.clearSelection();
-            layer.msg('复制成功', {icon: 1});
-        });
-        clipboard.on('error', function (e) {
-            layer.msg('复制失败，请手动复制', {icon: 2});
-        });
-
-        // 弹窗模式
-        $('#btnDilaog').click(function () {
-            layer.open({
-                type: 2,
-                title: '选择文件',
-                content: 'dialog.html',
-                area: ['600px', '420px'],
-                shade: .1,
-                fixed: false,
-                resize: true,
-                end: function () {
-                    if (mFsUrls && mFsUrls.length > 0) {
-                        layer.msg('你选择了：' + mFsUrls[0], {icon: 1});
-                        mFsUrls = undefined;
-                    }
-                }
-            });
+        // 选择
+        $('#sel').click(function () {
+            var urls = [];
+            urls.push(mUrl);
+            parent.mFsUrls = urls;
+            parent.layer.close(parent.layer.getFrameIndex(window.name));
         });
 
     });
