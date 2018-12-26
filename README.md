@@ -142,4 +142,4 @@ java -jar easy-fs-1.0.jar --fs.dir=XXX/ --fs.uuidName=true
 ### EasyWeb管理系统模板
 &emsp;一个开箱即用的后台模板，使用简单，模板丰富，包含传统ifram版、spa单页面路由版，[前往查看](https://easyweb.vip)。
 
-![EasyWeb](https://ws1.sinaimg.cn/large/88052d6bly1fydn64tcw6j20yz0jlgn4.jpg)
+<br>
