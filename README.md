@@ -5,6 +5,8 @@
 
 <br>
 
+> 在线演示：[在线演示](http://139.199.158.165:8081/)，演示系统关闭上传和删除功能。
+
 ## 独立部署
 1. 下载打包好的可部署文件 [最新版下载](https://gitee.com/whvse/easy-fs/releases)；
 2. 执行start.bat文件，linux使用命令nohup java -jar xxx.jar；
