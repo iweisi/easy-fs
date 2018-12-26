@@ -8,7 +8,7 @@
 ## 独立部署
 1. 下载打包好的可部署文件 [最新版下载](https://gitee.com/whvse/easy-fs/releases)；
 2. 执行start.bat文件，linux使用命令nohup java -jar xxx.jar；
-3. 访问 http://localhost:8081/，即可在线管理文件。 
+3. 访问 `http://localhost:8081/`，即可在线管理文件。 
 
 > &emsp;你也可以使用IDEA导入源码运行，如果是SpringMVC项目可复制源码FileController到你的项目里面使用。
 
