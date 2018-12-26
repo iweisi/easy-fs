@@ -109,7 +109,7 @@ layer.open({
  exts | 允许上传的后缀 | 使用`,`分割，例如`jpg,png`,就不能上传gif
  multi | 是否是多选 | true和false，不写默认为false
  
- > 示例： dialog.html?accept=image&exts=png,jpg&multi=false
+ > 示例： fileChoose.html?accept=image&exts=png,jpg&multi=false
 
 <br>
 
