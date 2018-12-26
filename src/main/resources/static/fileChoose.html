@@ -6,7 +6,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>EasyFS文件服务器</title>
-    <link rel="icon" href="assets/images/favicon.ico"/>
     <link rel="stylesheet" href="assets/layui/css/layui.css">
     <link rel="stylesheet" href="assets/common.css">
     <style>
@@ -24,6 +23,25 @@
                 text-align: left;
             }
         }
+
+        .bottomBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            text-align: right;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+        }
+
+        .showBB {
+            padding-bottom: 50px;
+        }
+
+        .showBB .bottomBar {
+            display: block;
+        }
     </style>
 </head>
 
@@ -38,12 +56,16 @@
         <button id="btnRefresh" class="layui-btn layui-btn-sm layui-btn-primary icon-btn">
             <i class="layui-icon">&#xe669;</i>刷新
         </button>
-        <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn">
+        <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn" style="margin-right: 0;">
             <i class="layui-icon">&#xe681;</i>上传
         </button>
     </div>
 
     <div class="file-list">
+    </div>
+
+    <div class="bottomBar">
+        <button id="btnSel" class="layui-btn layui-btn-sm layui-btn-normal icon-btn">完成选择</button>
     </div>
 </div>
 
@@ -62,24 +84,47 @@
     <div class="file-list-item" data-dir="{{item.isDir}}" data-url="{{item.url}}" data-name="{{item.name}}">
         <div class="file-list-img {{item.hasSm?'media':''}}">
             {{# if(item.hasSm){ }}
-            <img src="{{item.smUrl}}"/>
+            <img src="file/{{item.smUrl}}"/>
             {{# }else{ }}
             <img src="assets/images/fti/{{item.type}}.png"/>
             {{# } }}
         </div>
         <div class="file-list-name">{{item.name}}</div>
+        {{# if(!item.isDir && multi){ }}
+        <div class="file-list-ck layui-form">
+            <input type="checkbox" name="imgCk" lay-skin="primary" lay-filter="imgCk"/>
+        </div>
+        {{# } }}
     </div>
     {{#  }); }}
+    {{# if(d.length<=0){ }}
+    <div class="list-empty">
+        <i class="layui-icon layui-icon-face-surprised"></i>
+        <div>没有文件</div>
+    </div>
+    {{# } }}
 </script>
 
 <script type="text/javascript" src="assets/layui/layui.js"></script>
 <script>
-    layui.use(['jquery', 'layer', 'element', 'upload', 'laytpl'], function () {
+    var accept, exts, multi;  // 参数配置
+    layui.use(['jquery', 'layer', 'form', 'upload', 'laytpl', 'util'], function () {
         var $ = layui.jquery;
         var layer = layui.layer;
-        var element = layui.element;
+        var form = layui.form;
         var upload = layui.upload;
         var laytpl = layui.laytpl;
+        var util = layui.util;
+
+        accept = getQueryString("accept");
+        exts = getQueryString("exts");
+        multi = getQueryString("multi");
+        if (!accept) {
+            accept = 'file';
+        }
+        if (multi) {
+            $('body').addClass('showBB');
+        }
 
         // 渲染文件列表
         function renderList(dir) {
@@ -88,12 +133,16 @@
             }
             layer.load(2);
             $.get('api/list', {
-                dir: dir
+                dir: dir,
+                accept: accept,
+                exts: exts
             }, function (res) {
                 layer.closeAll('loading');
                 if (res.code == 200) {
                     laytpl(fileTpl.innerHTML).render(res.data, function (html) {
+                        $('#btnSel').text('完成选择');
                         $('.file-list').html(html);
+                        form.render('checkbox');
                     });
                 } else {
                     layer.msg(res.msg, {icon: 2});
@@ -104,6 +153,10 @@
         renderList();
 
         // 上传文件事件
+        var nExts;
+        if (exts) {
+            nExts = exts.replace(/,/g, "|");
+        }
         upload.render({
             elem: '#btnUpload',
             url: 'file/upload',
@@ -112,10 +165,11 @@
             },
             done: function (res, index, upload) {
                 layer.closeAll('loading');
-                if (res.code != 0) {
+                if (res.code != 200) {
                     layer.msg(res.msg, {icon: 2});
                 } else {
                     layer.msg(res.msg, {icon: 1});
+                    $('#tvFP').text(util.toDateString(new Date(), '/yyyy/MM/dd'));
                     renderList();
                 }
             },
@@ -123,7 +177,8 @@
                 layer.closeAll('loading');
                 layer.msg('上传失败', {icon: 2});
             },
-            accept: 'file'
+            accept: accept == 'image' ? 'imagess' : accept,
+            exts: nExts
         });
 
         // 刷新
@@ -180,17 +235,61 @@
 
         // 打开
         $('#open').click(function () {
-            window.open(mUrl);
+            window.open('file/' + mUrl);
         });
         // 选择
         $('#sel').click(function () {
+            if (!multi) {
+                var urls = [];
+                urls.push(mUrl);
+                parent.mFsUrls = urls;
+                parent.layer.close(parent.layer.getFrameIndex(window.name));
+            } else {
+                var $ck = $('.file-list-item[data-url="' + mUrl + '"] input[name="imgCk"]');
+                $ck.prop('checked', !$ck.prop('checked'));
+                form.render('checkbox');
+                $ck.parents('.file-list-item').toggleClass('active');
+                $('#btnSel').text('完成选择(' + $('input[name="imgCk"]:checked').length + ')');
+            }
+        });
+
+        // 多选框事件
+        $('body').on('click', '.file-list-ck', function (e) {
+            if (e !== void 0) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // 完成选择按钮
+        $('#btnSel').click(function () {
             var urls = [];
-            urls.push(mUrl);
+            $('input[name="imgCk"]:checked').each(function () {
+                urls.push($(this).parents('.file-list-item').data('url'));
+            });
             parent.mFsUrls = urls;
             parent.layer.close(parent.layer.getFrameIndex(window.name));
         });
 
+        // 监听复选框选中
+        form.on('checkbox(imgCk)', function (data) {
+            if (data.elem.checked) {
+                $(data.elem).parents('.file-list-item').addClass('active');
+            } else {
+                $(data.elem).parents('.file-list-item').removeClass('active');
+            }
+            $('#btnSel').text('完成选择(' + $('input[name="imgCk"]:checked').length + ')');
+        });
+
     });
+
+    // 获取url参数
+    function getQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]);
+        return null;
+    }
 </script>
 </body>
 </html>

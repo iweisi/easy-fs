@@ -6,7 +6,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>EasyFS文件服务器</title>
-    <link rel="icon" href="assets/images/favicon.ico"/>
     <link rel="stylesheet" href="assets/layui/css/layui.css">
     <link rel="stylesheet" href="assets/common.css">
 </head>
@@ -15,12 +14,11 @@
 <div class="header">
     <div class="layui-container">
         <div class="layui-logo">
-            <img src="assets/images/logo.png"/>
-            <cite class="layui-hide-xs">&nbsp;&nbsp;EasyFS文件服务器</cite>
+            <img src="assets/images/logo.png"/><cite> EasyFS<span class="layui-hide-xs">文件服务器</span></cite>
         </div>
         <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide-xs" lay-unselect>
-                <a><i class="layui-icon">&#xe66c;</i> 欢迎使用！</a>
+            <li class="layui-nav-item" lay-unselect>
+                <a href="https://gitee.com/whvse/easy-fs" target="_blank"><i class="layui-icon">&#xe60b;</i> 使用指南</a>
             </li>
         </ul>
     </div>
@@ -30,15 +28,14 @@
     <div class="layui-card">
         <div class="layui-card-header">当前位置：<span id="tvFP">/</span></div>
         <div class="layui-card-body">
-            <div>
+            <div class="btnDiv">
                 <button id="btnBack" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe65c;</i>返回上级
                 </button>
                 <button id="btnRefresh" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe669;</i>刷新
                 </button>
                 <button id="btnUpload" class="layui-btn layui-btn-sm layui-btn-normal icon-btn"><i class="layui-icon">&#xe681;</i>上传文件
                 </button>
-                <button id="btnDilaog" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"
-                        style="margin-left: 10px;"><i class="layui-icon">&#xe634;</i>弹窗模式
+                <button id="btnDilaog" class="layui-btn layui-btn-sm layui-btn-primary icon-btn"><i class="layui-icon">&#xe634;</i>弹窗模式
                 </button>
             </div>
 
@@ -47,6 +44,10 @@
 
         </div>
     </div>
+</div>
+
+<div style="position: absolute;bottom: 25px;text-align: center;left: 0;right: 0">
+    <a style="color: #777;" href="http://easyweb.vip" target="_blank">easyweb.vip 版权所有</a>
 </div>
 
 <!-- 下拉菜单 -->
@@ -69,7 +70,7 @@
     <div class="file-list-item" data-dir="{{item.isDir}}" data-url="{{item.url}}" data-name="{{item.name}}">
         <div class="file-list-img {{item.hasSm?'media':''}}">
             {{# if(item.hasSm){ }}
-            <img src="{{item.smUrl}}"/>
+            <img src="file/{{item.smUrl}}"/>
             {{# }else{ }}
             <img src="assets/images/fti/{{item.type}}.png"/>
             {{# } }}
@@ -77,17 +78,24 @@
         <div class="file-list-name">{{item.name}}</div>
     </div>
     {{#  }); }}
+    {{# if(d.length<=0){ }}
+    <div class="list-empty">
+        <i class="layui-icon layui-icon-face-surprised"></i>
+        <div>没有文件</div>
+    </div>
+    {{# } }}
 </script>
 
 <script type="text/javascript" src="assets/layui/layui.js"></script>
 <script type="text/javascript" src="assets/clipboard.min.js"></script>
 <script>
-    layui.use(['jquery', 'layer', 'element', 'upload', 'laytpl'], function () {
+    layui.use(['jquery', 'layer', 'element', 'upload', 'laytpl', 'util'], function () {
         var $ = layui.jquery;
         var layer = layui.layer;
         var element = layui.element;
         var upload = layui.upload;
         var laytpl = layui.laytpl;
+        var util = layui.util;
 
         // 渲染文件列表
         function renderList(dir) {
@@ -120,10 +128,11 @@
             },
             done: function (res, index, upload) {
                 layer.closeAll('loading');
-                if (res.code != 0) {
+                if (res.code != 200) {
                     layer.msg(res.msg, {icon: 2});
                 } else {
                     layer.msg(res.msg, {icon: 1});
+                    $('#tvFP').text(util.toDateString(new Date(), '/yyyy/MM/dd'));
                     renderList();
                 }
             },
@@ -188,7 +197,7 @@
 
         // 打开
         $('#open').click(function () {
-            window.open(mUrl);
+            window.open('file/' + mUrl);
         });
         // 删除
         $('#del').click(function () {
@@ -211,7 +220,7 @@
         var clipboard = new ClipboardJS('#copy');
         clipboard.on('success', function (e) {
             e.clearSelection();
-            layer.msg('复制成功', {icon: 1});
+            layer.msg('文件地址已复制', {icon: 1});
         });
         clipboard.on('error', function (e) {
             layer.msg('复制失败，请手动复制', {icon: 2});
@@ -222,14 +231,15 @@
             layer.open({
                 type: 2,
                 title: '选择文件',
-                content: 'dialog.html',
+                content: 'fileChoose.html?accept=image&exts=png,jpg&multi=true',
                 area: ['600px', '420px'],
+                offset: '50px',
                 shade: .1,
                 fixed: false,
-                resize: true,
+                resize: false,
                 end: function () {
-                    if (mFsUrls && mFsUrls.length > 0) {
-                        layer.msg('你选择了：' + mFsUrls[0], {icon: 1});
+                    if (typeof(mFsUrls) != "undefined" && mFsUrls.length > 0) {
+                        layer.msg('你选择了：' + JSON.stringify(mFsUrls), {icon: 1});
                         mFsUrls = undefined;
                     }
                 }

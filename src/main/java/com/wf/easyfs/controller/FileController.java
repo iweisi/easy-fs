@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
+ * 文件服务器
  * Created by wangfan on 2018-12-24 下午 4:10.
  */
 @Controller
@@ -73,15 +75,24 @@ public class FileController {
                 outFile.getParentFile().mkdirs();
             }
             file.transferTo(outFile);
-            Map rs = getRS(0, "上传成功", path);
+            Map rs = getRS(200, "上传成功", path);
             //生成缩略图
             if (useSm != null && useSm) {
-                File smImg = new File(File.listRoots()[0], fileDir + "sm/" + path);
-                if (!smImg.getParentFile().exists()) {
-                    smImg.getParentFile().mkdirs();
+                // 获取文件类型
+                String contentType = null;
+                try {
+                    contentType = Files.probeContentType(Paths.get(outFile.getName()));
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                Thumbnails.of(outFile).scale(1f).outputQuality(0.25f).toFile(smImg);
-                rs.put("smUrl", "sm/" + path);
+                if (contentType != null && contentType.startsWith("image/")) {
+                    File smImg = new File(File.listRoots()[0], fileDir + "sm/" + path);
+                    if (!smImg.getParentFile().exists()) {
+                        smImg.getParentFile().mkdirs();
+                    }
+                    Thumbnails.of(outFile).scale(1f).outputQuality(0.25f).toFile(smImg);
+                    rs.put("smUrl", "sm/" + path);
+                }
             }
             return rs;
         } catch (Exception e) {
@@ -94,28 +105,64 @@ public class FileController {
      * 查看原文件
      */
     @GetMapping("/file/{y}/{m}/{d}/{file:.+}")
-    public void file(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+    public String file(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+        String filePath = y + "/" + m + "/" + d + "/" + filename;
+        if (useNginx) {
+            if (nginxUrl == null) {
+                nginxUrl = "/";
+            }
+            if (!nginxUrl.endsWith("/")) {
+                nginxUrl += "/";
+            }
+            String newName;
+            try {
+                newName = URLEncoder.encode(filePath, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+                newName = filePath;
+            }
+            return "redirect:" + nginxUrl + newName;
+        }
         if (fileDir == null) {
             fileDir = "/";
         }
         if (!fileDir.endsWith("/")) {
             fileDir += "/";
         }
-        outputFile(fileDir + y + "/" + m + "/" + d + "/" + filename, response);
+        outputFile(fileDir + filePath, response);
+        return null;
     }
 
     /**
      * 查看缩略图
      */
     @GetMapping("/file/sm/{y}/{m}/{d}/{file:.+}")
-    public void fileSm(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+    public String fileSm(@PathVariable("y") String y, @PathVariable("m") String m, @PathVariable("d") String d, @PathVariable("file") String filename, HttpServletResponse response) {
+        String filePath = "sm/" + y + "/" + m + "/" + d + "/" + filename;
+        if (useNginx) {
+            if (nginxUrl == null) {
+                nginxUrl = "/";
+            }
+            if (!nginxUrl.endsWith("/")) {
+                nginxUrl += "/";
+            }
+            String newName;
+            try {
+                newName = URLEncoder.encode(filePath, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+                newName = filePath;
+            }
+            return "redirect:" + nginxUrl + newName;
+        }
         if (fileDir == null) {
             fileDir = "/";
         }
         if (!fileDir.endsWith("/")) {
             fileDir += "/";
         }
-        outputFile(fileDir + "sm/" + y + "/" + m + "/" + d + "/" + filename, response);
+        outputFile(fileDir + filePath, response);
+        return null;
     }
 
     // 输出文件流
@@ -146,7 +193,14 @@ public class FileController {
             response.setContentType(contentType);
         } else {
             response.setContentType("application/force-download");
-            response.setHeader("Content-Disposition", "attachment;fileName=" + inFile.getName());
+            String newName;
+            try {
+                newName = URLEncoder.encode(inFile.getName(), "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+                newName = inFile.getName();
+            }
+            response.setHeader("Content-Disposition", "attachment;fileName=" + newName);
         }
         // 输出文件流
         OutputStream os = null;
@@ -155,8 +209,9 @@ public class FileController {
             is = new FileInputStream(inFile);
             os = response.getOutputStream();
             byte[] bytes = new byte[1024];
-            while (is.read(bytes) != -1) {
-                os.write(bytes);
+            int len;
+            while ((len = is.read(bytes)) != -1) {
+                os.write(bytes, 0, len);
             }
             os.flush();
         } catch (FileNotFoundException e) {
@@ -178,18 +233,10 @@ public class FileController {
      */
     @ResponseBody
     @RequestMapping("/api/list")
-    public Map list(String dir) {
-        String serverUrl;
-        if (useNginx) {
-            if (nginxUrl == null) {
-                nginxUrl = "/";
-            }
-            if (!nginxUrl.endsWith("/")) {
-                nginxUrl += "/";
-            }
-            serverUrl = nginxUrl;
-        } else {
-            serverUrl = "file/";
+    public Map list(String dir, String accept, String exts) {
+        String[] mExts = null;
+        if (exts != null && !exts.trim().isEmpty()) {
+            mExts = exts.split(",");
         }
         if (fileDir == null) {
             fileDir = "/";
@@ -219,7 +266,7 @@ public class FileController {
                     m.put("type", "dir");  // 文件类型
                 } else {
                     String type;
-                    m.put("url", serverUrl + (dir.isEmpty() ? dir : (dir + "/")) + f.getName());  // 文件地址
+                    m.put("url", (dir.isEmpty() ? dir : (dir + "/")) + f.getName());  // 文件地址
                     // 获取文件类型
                     Path path = Paths.get(f.getName());
                     String contentType = null;
@@ -229,6 +276,20 @@ public class FileController {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    // 筛选文件类型
+                    if (accept != null && !accept.trim().isEmpty() && !accept.equals("file")) {
+                        if (contentType == null || !contentType.startsWith(accept + "/")) {
+                            continue;
+                        }
+                        if (mExts != null) {
+                            for (String ext : mExts) {
+                                if (!f.getName().endsWith("." + ext)) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    // 获取文件图标
                     if ("ppt".equalsIgnoreCase(suffix) || "pptx".equalsIgnoreCase(suffix)) {
                         type = "ppt";
                     } else if ("doc".equalsIgnoreCase(suffix) || "docx".equalsIgnoreCase(suffix)) {
@@ -251,23 +312,42 @@ public class FileController {
                         type = "mp3";
                     } else if (contentType != null && contentType.startsWith("video/")) {
                         type = "mp4";
-                    } else if (contentType != null && contentType.startsWith("image/")) {
-                        m.put("hasSm", true);  // 是否有缩略图
-                        if (useSm != null && useSm) {
-                            m.put("smUrl", serverUrl + "sm/" + (dir.isEmpty() ? dir : (dir + "/")) + f.getName());  // 缩略图地址
-                        } else {
-                            m.put("smUrl", m.get("url"));
-                        }
+                    }/* else if (contentType != null && contentType.startsWith("image/")) {
                         type = "file";
-                    } else {
+                        m.put("hasSm", true);
+                        m.put("smUrl", m.get("url"));  // 缩略图地址
+                    }*/ else {
                         type = "file";
                     }
                     m.put("type", type);
-
+                    // 是否有缩略图
+                    String smUrl = "sm/" + (dir.isEmpty() ? dir : (dir + "/")) + f.getName();
+                    if (new File(File.listRoots()[0], fileDir + smUrl).exists()) {
+                        m.put("hasSm", true);
+                        m.put("smUrl", smUrl);  // 缩略图地址
+                    }
                 }
                 dataList.add(m);
             }
         }
+        // 根据上传时间排序
+        Collections.sort(dataList, new Comparator<Map>() {
+            @Override
+            public int compare(Map o1, Map o2) {
+                Long l1 = (long) o1.get("updateTime");
+                Long l2 = (long) o2.get("updateTime");
+                return l1.compareTo(l2);
+            }
+        });
+        // 把文件夹排在前面
+        Collections.sort(dataList, new Comparator<Map>() {
+            @Override
+            public int compare(Map o1, Map o2) {
+                Boolean l1 = (boolean) o1.get("isDir");
+                Boolean l2 = (boolean) o2.get("isDir");
+                return l2.compareTo(l1);
+            }
+        });
         rs.put("code", 200);
         rs.put("msg", "查询成功");
         rs.put("data", dataList);

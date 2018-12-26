@@ -20,11 +20,24 @@ a {
     padding: 0 10px;
 }
 
+.btnDiv .layui-btn {
+    margin-bottom: 15px;
+    margin-left: 0;
+    margin-right: 10px;
+}
+
+.btnDiv .layui-btn:last-child {
+    margin-right: 0;
+}
+
+.layui-layer {
+    max-width: 100%;
+}
+
 /** 导航栏样式 */
 .header .layui-nav .layui-this:after, .header .layui-nav-bar {
     height: 2px;
     background-color: #03152A;
-    top: 0 !important;
 }
 
 .header .layui-nav-item .layui-icon {
@@ -80,6 +93,8 @@ a {
     font-family: Myriad Pro, Helvetica Neue, Arial, Helvetica, sans-serif;
     font-weight: bold;
     transition: all .3s;
+    cursor: pointer;
+    display: inline-block;
 }
 
 .header .layui-logo img {
@@ -93,9 +108,6 @@ a {
 /** //导航栏样式end */
 
 /** 文件列表样式 */
-.file-list {
-    margin-top: 15px;
-}
 
 .file-list-item {
     display: inline-block;
@@ -106,15 +118,27 @@ a {
     vertical-align: top;
     color: #333;
     cursor: pointer;
+    position: relative;
 }
 
 .file-list-item:hover {
     color: #1E9FFF;
 }
 
+.file-list-item.active .file-list-img:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
 .file-list-item .file-list-img {
     width: 90px;
     height: 90px;
+    position: relative;
 }
 
 .file-list-item .file-list-img img {
@@ -135,6 +159,34 @@ a {
     line-height: normal;
     font-size: 11px;
     margin-top: 5px;
+}
+
+.file-list-item .file-list-ck {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    text-align: right;
+}
+
+.file-list-item .file-list-ck .layui-form-checkbox {
+    padding: 0;
+}
+
+.list-empty {
+    text-align: center;
+    color: rgba(0, 0, 0, .45);
+    padding: 50px 0;
+}
+
+.list-empty .layui-icon {
+    font-size: 60px;
+    line-height: 60px;
+}
+
+.list-empty .layui-icon + div {
+    padding-top: 6px;
 }
 
 /** //文件列表样式end */
@@ -424,3 +476,38 @@ html.dropdown-no-scroll {
 }
 
 /** //下拉列表样式end */
+
+/** 滚动条样式美化 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+    background-color: #A6A6A6;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #7f7f7f;
+}
+
+@media screen and (max-width: 750px) {
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+.mini-bar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
