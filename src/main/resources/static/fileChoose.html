@@ -90,7 +90,7 @@
             {{# } }}
         </div>
         <div class="file-list-name">{{item.name}}</div>
-        {{# if(!item.isDir && multi){ }}
+        {{# if(!item.isDir && 'true'==multi){ }}
         <div class="file-list-ck layui-form">
             <input type="checkbox" name="imgCk" lay-skin="primary" lay-filter="imgCk"/>
         </div>
@@ -107,7 +107,7 @@
 
 <script type="text/javascript" src="assets/layui/layui.js"></script>
 <script>
-    var accept, exts, multi;  // 参数配置
+    var accept, exts, multi, maxNum;  // 参数配置
     layui.use(['jquery', 'layer', 'form', 'upload', 'laytpl', 'util'], function () {
         var $ = layui.jquery;
         var layer = layui.layer;
@@ -119,10 +119,11 @@
         accept = getQueryString("accept");
         exts = getQueryString("exts");
         multi = getQueryString("multi");
+        maxNum = getQueryString("maxNum");
         if (!accept) {
             accept = 'file';
         }
-        if (multi) {
+        if (multi && multi == 'true') {
             $('body').addClass('showBB');
         }
 
@@ -239,7 +240,7 @@
         });
         // 选择
         $('#sel').click(function () {
-            if (!multi) {
+            if (!multi || multi == 'false') {
                 var urls = [];
                 urls.push(mUrl);
                 parent.mFsUrls = urls;
@@ -267,6 +268,14 @@
             $('input[name="imgCk"]:checked').each(function () {
                 urls.push($(this).parents('.file-list-item').data('url'));
             });
+            if (urls.length <= 0) {
+                layer.msg('请选择', {icon: 2});
+                return;
+            }
+            if (maxNum && parseInt(maxNum) > 1 && urls.length > maxNum) {
+                layer.msg('最多只能选择' + maxNum + '个', {icon: 2});
+                return;
+            }
             parent.mFsUrls = urls;
             parent.layer.close(parent.layer.getFrameIndex(window.name));
         });

@@ -108,6 +108,7 @@ layer.open({
  accept | 允许上传的文件类型 | image(图片)、video(视频)、audio(音频)、file(所有文件)
  exts | 允许上传的后缀 | 使用`,`分割，例如`jpg,png`,就不能上传gif
  multi | 是否是多选 | true和false，不写默认为false
+ maxNum| 多选时最多选择几个 | 默认无限
  
  > 示例： fileChoose.html?accept=image&exts=png,jpg&multi=false
 
