@@ -284,8 +284,8 @@
 
         // 监听复选框选中
         form.on('checkbox(imgCk)', function (data) {
+            var ckSize = $('input[name="imgCk"]:checked').length;
             if (data.elem.checked) {
-                var ckSize = $('input[name="imgCk"]:checked').length;
                 if (maxNum && parseInt(maxNum) > 1 && ckSize > maxNum) {
                     layer.msg('最多只能选择' + maxNum + '个', {icon: 2});
                     $(data.elem).prop('checked', false);
