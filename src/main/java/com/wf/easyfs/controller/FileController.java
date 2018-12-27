@@ -388,10 +388,6 @@ public class FileController {
         Map<String, Object> map = new HashMap<>();
         map.put("code", code);
         map.put("msg", msg);
-        if (code == 500) {
-            map.put("msg", msg == null ? "操作失败" : msg);
-            map.put("details", msg);
-        }
         if (url != null) {
             map.put("url", url);
         }

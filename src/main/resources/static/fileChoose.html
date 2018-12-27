@@ -31,8 +31,9 @@
             right: 0;
             padding: 10px;
             text-align: right;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.9);
             display: none;
+            border-top: 1px solid #e6e6e6;
         }
 
         .showBB {
@@ -246,11 +247,12 @@
                 parent.mFsUrls = urls;
                 parent.layer.close(parent.layer.getFrameIndex(window.name));
             } else {
-                var $ck = $('.file-list-item[data-url="' + mUrl + '"] input[name="imgCk"]');
+                /*var $ck = $('.file-list-item[data-url="' + mUrl + '"] input[name="imgCk"]');
                 $ck.prop('checked', !$ck.prop('checked'));
                 form.render('checkbox');
                 $ck.parents('.file-list-item').toggleClass('active');
-                $('#btnSel').text('完成选择(' + $('input[name="imgCk"]:checked').length + ')');
+                $('#btnSel').text('完成选择(' + $('input[name="imgCk"]:checked').length + ')');*/
+                $('.file-list-item[data-url="' + mUrl + '"] .layui-form-checkbox').trigger('click');
             }
         });
 
@@ -283,11 +285,18 @@
         // 监听复选框选中
         form.on('checkbox(imgCk)', function (data) {
             if (data.elem.checked) {
+                var ckSize = $('input[name="imgCk"]:checked').length;
+                if (maxNum && parseInt(maxNum) > 1 && ckSize > maxNum) {
+                    layer.msg('最多只能选择' + maxNum + '个', {icon: 2});
+                    $(data.elem).prop('checked', false);
+                    form.render('checkbox');
+                    return;
+                }
                 $(data.elem).parents('.file-list-item').addClass('active');
             } else {
                 $(data.elem).parents('.file-list-item').removeClass('active');
             }
-            $('#btnSel').text('完成选择(' + $('input[name="imgCk"]:checked').length + ')');
+            $('#btnSel').text('完成选择(' + ckSize + ')');
         });
 
     });
